@@ -32,3 +32,12 @@ Use a reconstruction loss (commonly mean squared error) to measure how well the 
     * Reconstruction Error: Once trained, calculate the reconstruction error for each connection/flow. Under normal conditions, this error should be relatively low.
 
     * Set a Threshold: Analyze the distribution of reconstruction errors on your validation (or training) set and choose a threshold above which an instance is considered anomalous. You may need to tune this threshold to balance false positives and false negatives.
+
+
+## Tools
+
+Create joy JSON from the source PCAPs (run from the root folder)
+
+```
+ .\Scripts\Joy.Export-Flows.ps1 -JoyPath .\Tools\Joy -PcapFolder .\CSNet\datasets\mobile\ -OutPath .\Fedauto\datasets\mobile.joy\
+```
