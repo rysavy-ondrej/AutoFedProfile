@@ -59,6 +59,7 @@ Each document contains JSON records (NDJSON) for TLS connections. The following 
 | tls.rec    | array of individual TLS record lengths observed in the communication         |
 | sample     | sample field (for testing), value can be "nil" if not provided               |
 
+The TLS record array contains TLS record sizes. A negative number represents communication from client to server, while a positive number represents communication in the opposite direction.
 
 Example:
 
