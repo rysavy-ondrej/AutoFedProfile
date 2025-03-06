@@ -9,7 +9,7 @@ Federated Learning is a decentralized machine learning approach where multiple p
 ## Approach
 
 1. Collect and Clean Data:
-Gather extended flow information (e.g., TLS parameters, packet sizes, record sizes) and perform any necessary cleaning and normalization. Make sure your training dataset represents typical, non-anomalous behavior. This is done using Joy. The preprocess Joy output is a JSON file that is suitable for further processing, e.g. feature extraction. 
+Collect advanced flow information (e.g., TLS parameters, packet sizes, record sizes) and perform any necessary cleaning and normalization. Ensure that your training data set represents typical, non-anomalous behavior. Processing of the source capture file into JSON data is done using the `Shar.Export-TlsConnections.ps1` script. See the *Tools* section for how to use this tool.
 
 2. Feature Engineering:
 Convert categorical parameters (e.g., TLS cipher suites) to numerical representations (e.g., one-hot encoding) and scale numerical features. For sequence data (like packet size sequences), consider techniques such as padding or time-window aggregation.
@@ -36,8 +36,21 @@ Use a reconstruction loss (commonly mean squared error) to measure how well the 
 
 ## Tools
 
-Create joy JSON from the source PCAPs (run from the root folder)
+Creating JSON from the source capture files requires installation of the [tshark tool](https://tshark.dev/setup/install/) and the [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.5) environment. The script to decode the capture file and extract information for each TLS connection and output it as JSON is `Shark.Export-TlsConnections.ps1`, available in the `scripts` subfolder.
 
+```bash
+ ./scripts/Shark.Export-TlsConnections.ps1 -PcapFolder PATH-TO-CAPUTRE-FOLDER -Recurse $true -OutPath PATH-TO-OUTPUT-JSON-FOLDER 
 ```
- .\Scripts\Joy.Export-Flows.ps1 -JoyPath .\Tools\Joy -PcapFolder .\CSNet\datasets\mobile\ -OutPath .\Fedauto\datasets\mobile.joy\
+
+The following example will process all the capture files for Windows applications' communication:
+
+```bash
+./scripts/Shark.Export-TlsConnections.ps1 -PcapFolder ../Datasets/Windows/Captures  -Recurse $true -OutPath ./datasets/windows.tls/
 ```
+
+## Available Datasets
+
+| Dataset | Description|
+| --- | --- | 
+[CCCS-CIC-AndMal-2020](https://www.unb.ca/cic/datasets/andmal2020.html) |  A comprehensive and huge android malware dataset, named CCCS-CIC-AndMal-2020. The dataset includes 200K benign and 200K malware samples totalling to 400K android apps with 14 prominent malware categories and 191 eminent malware families.|
+[CIC-AAGM2017](https://www.unb.ca/cic/datasets/android-adware.html) | CICAAGM dataset is captured by installing the Android apps on the real smartphones semi-automated. The CICAAGM dataset consists of the network traffic of both the malware and benign (20% malware and 80% benign) |
