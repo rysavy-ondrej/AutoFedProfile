@@ -110,6 +110,9 @@ local f_udp_srcport = Field.new("udp.srcport")
 local f_udp_dstport = Field.new("udp.dstport")
 local f_ip_proto    = Field.new("ip.proto")
 
+local f_tcp_syn     = Field.new("tcp.flags.syn")
+local f_tcp_ack     = Field.new("tcp.flags.ack")
+
 -- TLS-specific field extractors (handshake)
 local f_tls_hs_type         = Field.new("tls.handshake.type")
 local f_tls_hs_version      = Field.new("tls.handshake.version")
@@ -228,7 +231,12 @@ for _, pairStr in ipairs(args_array) do
     end
 end
 
-sample = args_map["sample"]
+local sample = args_map["sample"]
+local incomplete = args_map["incomplete"]
+if not incomplete then
+    incomplete="drop"
+end
+
 
 -- Table to store connections; key is an order-insensitive connection key.
 local connections = {}
@@ -243,42 +251,49 @@ function tap.packet(pinfo, tvb)
     local ip_proto = f_ip_proto()
     local tcp_src  = f_tcp_srcport()
     local tcp_dst  = f_tcp_dstport()
-    local udp_src  = f_udp_srcport()
-    local udp_dst  = f_udp_dstport()
-
     local pkt_len = tvb:len()
+    local pkt_num = pinfo.number
 
-    if ip_src and ip_dst and ip_proto then
-        local src   = tostring(ip_src)
-        local dst   = tostring(ip_dst)
-        local proto = tonumber(tostring(ip_proto))
-        local sp, dp = nil, nil
 
-        -- Process only TCP (6) or UDP (17) packets; typically TLS runs over TCP.
-        if proto == 6 then
-            if tcp_src and tcp_dst then
-                sp = tonumber(tostring(tcp_src))
-                dp = tonumber(tostring(tcp_dst))
-            end
-        elseif proto == 17 then
-            if udp_src and udp_dst then
-                sp = tonumber(tostring(udp_src))
-                dp = tonumber(tostring(udp_dst))
-            end
-        end
+    local src   = tostring(ip_src)
+    local dst   = tostring(ip_dst)
+    local proto = tonumber(tostring(ip_proto))
+    local sp = tonumber(tostring(tcp_src))
+    local dp = tonumber(tostring(tcp_dst))
 
-        if sp and dp then
+    -- final check that we have evruhgting that we need:
+    if src and dst and proto and sp and dp then
             local key = get_connection_key(src, sp, dst, dp, proto)
             local current_ts = pinfo.abs_ts
 
+            -- first packet then initialize the connection
             if not connections[key] then
-                -- First packet seen for this connection: assume it's from the client.
+                -- First packet seen for this connection: we need to determine if this is client or server packet:
+                -- 1. Typically, the client uses an ephemeral (high-numbered) port while the server uses a well-known port.
+                -- 2. The first packet should include the SYN flag without the ACK flag, which means that it is the packet 
+                -- from the client starting the handshake. On the other hand we use tls filter that does not provide us 
+                -- TCP handshake nor empty TCP packets.
+                -- Thus the only rule is port number:
+                local client_sa, client_da = ""
+                local client_sp, client_dp = 0            
+                if (sp >= dp)  then
+                    client_sa = src
+                    client_da = dst
+                    client_sp = sp
+                    client_dp = dp
+                else
+                    client_da = src
+                    client_sa = dst
+                    client_dp = sp
+                    client_sp = dp
+                end
+
                 connections[key] = {
                     pt = proto,
-                    sa = src,   -- client IP
-                    sp = sp,    -- client port
-                    da = dst,   -- server IP
-                    dp = dp,    -- server port
+                    sa = client_sa,   -- client IP
+                    sp = client_sp,    -- client port
+                    da = client_da,   -- server IP
+                    dp = client_dp,    -- server port
                     ps = 0,     -- packets from client to server
                     pr = 0,     -- packets from server to client
                     bs = 0,     -- octets from client to server
@@ -430,37 +445,39 @@ function tap.packet(pinfo, tvb)
                     end
                 end
             end
-        end
     end
 end
 
 -- After processing all packets, print each TLS connection as a JSON object on its own line.
 function tap.draw()
     for _, conn in pairs(connections) do
-        local client_ciphers = int_array_to_hex16_json(conn["tls.cc"])
-        local client_extensions = int_array_to_hex16_json(conn["tls.ce"])
-        local server_extensions = int_array_to_hex16_json(conn["tls.se"])
-        local alpn_string = array_to_json(conn["tls.alpn"])
-        local sig_string = int_array_to_hex16_json(conn["tls.sig"])
-        local cvers = int_array_to_hex16_json(conn["tls.csv"])
-        local svers = int_array_to_hex16_json(conn["tls.ssv"])
-        local json_line = string.format(
-            '{ "pt": %d, "sa": "%s", "sp": %d, "da": "%s", "dp": %d, "ps": %d, "pr": %d, "bs": %d, "br": %d, "ts": %.3f, "td": %.3f, ' ..
-            '"tls.cver": "%s", "tls.ccs": %s, "tls.cext": %s, "tls.csg": %s, "tls.csv": %s, "tls.alpn": %s, "tls.sni": "%s",' .. 
-            '"tls.sver": "%s", "tls.scs": "%s", "tls.sext": %s, "tls.ssv": %s, ' ..
-            '"tls.ja3": "%s", "tls.ja3s": "%s","tls.ja4": "%s","tls.ja4s": "%s",'..
-            '"tls.rec": %s, "sample": "%s" }',
-            conn.pt, conn.sa, conn.sp, conn.da, conn.dp,
-            conn.ps, conn.pr, conn.bs, conn.br,
-            conn.ts, conn.td,
-            conn["tls.cv"], client_ciphers, client_extensions, sig_string, cvers, alpn_string, conn["tls.sn"], 
-            conn["tls.sv"], conn["tls.sc"], server_extensions, svers,
-            conn["tls.ja3"], conn["tls.ja3s"], conn["tls.ja4"], conn["tls.ja4s"],
-            int_array_to_json(conn["tls.rec"]), sample
-        )
-        print(json_line)
+        if not (incomplete == "drop" and (conn["tls.cv"] == "" or conn["tls.sv"] == "")) then
+            local client_ciphers = int_array_to_hex16_json(conn["tls.cc"])
+            local client_extensions = int_array_to_hex16_json(conn["tls.ce"])
+            local server_extensions = int_array_to_hex16_json(conn["tls.se"])
+            local alpn_string = array_to_json(conn["tls.alpn"])
+            local sig_string = int_array_to_hex16_json(conn["tls.sig"])
+            local cvers = int_array_to_hex16_json(conn["tls.csv"])
+            local svers = int_array_to_hex16_json(conn["tls.ssv"])
+            local json_line = string.format(
+                '{ "pt": %d, "sa": "%s", "sp": %d, "da": "%s", "dp": %d, "ps": %d, "pr": %d, "bs": %d, "br": %d, "ts": %.3f, "td": %.3f, ' ..
+                '"tls.cver": "%s", "tls.ccs": %s, "tls.cext": %s, "tls.csg": %s, "tls.csv": %s, "tls.alpn": %s, "tls.sni": "%s",' .. 
+                '"tls.sver": "%s", "tls.scs": "%s", "tls.sext": %s, "tls.ssv": %s, ' ..
+                '"tls.ja3": "%s", "tls.ja3s": "%s","tls.ja4": "%s","tls.ja4s": "%s",'..
+                '"tls.rec": %s, "sample": "%s" }',
+                conn.pt, conn.sa, conn.sp, conn.da, conn.dp,
+                conn.ps, conn.pr, conn.bs, conn.br,
+                conn.ts, conn.td,
+                conn["tls.cv"], client_ciphers, client_extensions, sig_string, cvers, alpn_string, conn["tls.sn"], 
+                conn["tls.sv"], conn["tls.sc"], server_extensions, svers,
+                conn["tls.ja3"], conn["tls.ja3s"], conn["tls.ja4"], conn["tls.ja4s"],
+                int_array_to_json(conn["tls.rec"]), sample
+            )
+            print(json_line)
+        end
     end
 end
+
 "@
 
 if (-Not (Test-Path -Path $OutPath)) {
