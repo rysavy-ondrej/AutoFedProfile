@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fedvaeexample"
+version = "1.0.0"
+description = "Federated Variational Autoencoder Example with PyTorch and Flower"
+license = "Apache-2.0"
+dependencies = [
+    "flwr[simulation]>=1.17.0",
+    "flwr-datasets[vision]>=0.5.0",
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.flwr.app]
+publisher = "flwrlabs"
+
+[tool.flwr.app.components]
+serverapp = "fedvaeexample.server_app:app"
+clientapp = "fedvaeexample.client_app:app"
+
+[tool.flwr.app.config]
+num-server-rounds = 3
+local-epochs = 3
+learning-rate = 0.001
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 2
+options.backend.init_args.num_gpus = 1 # Expose a single GPU to the simulation
