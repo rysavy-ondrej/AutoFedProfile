@@ -25,9 +25,13 @@ serverapp = "fedvaeexample.server_app:app"
 clientapp = "fedvaeexample.client_app:app"
 
 [tool.flwr.app.config]
+use-wandb = false
 num-server-rounds = 3
 local-epochs = 3
 learning-rate = 0.001
+fraction-fit = 0.25
+fraction-evaluate = 0.5
+server-device = "cuda:0"
 
 [tool.flwr.federations]
 default = "local-simulation"

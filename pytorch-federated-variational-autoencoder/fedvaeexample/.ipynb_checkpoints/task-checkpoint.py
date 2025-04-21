@@ -8,6 +8,8 @@ from datasets import Dataset
 from torchvision.transforms import Compose, Normalize, ToTensor
 from collections import OrderedDict
 import numpy as np
+import matplotlib.pyplot as plt
+import numpy as np
 import glob
 import json
 import pandas as pd
@@ -17,11 +19,15 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 
+from flwr.common.typing import UserConfig
+from pathlib import Path
+from datetime import datetime
+
 # ## Constant setup
 
 RECORD_SEQUENCE_SIZE=20
 tls_columns_names = np.array([f"tls.rec.{i}" for i in range(RECORD_SEQUENCE_SIZE)])
-dataset_path = "./datasets/desktop.tls/*.json" # replace with the dataset
+dataset_path = "/workspace/datasets/desktop.tls/*.json" # replace with the dataset
 
 # ## Model Definition
 
@@ -149,7 +155,7 @@ def fit_preprocessor(df):
     pipeline.fit(df)
     return pipeline
 
-def get_processed_data():
+def get_processed_data(dataset_path):
     raw_df = load_json_files(glob.glob(dataset_path))
     print(f'dataset shape={raw_df.shape}')
     input_df = extract_features(raw_df)
@@ -162,6 +168,9 @@ def get_processed_data():
     
     return normal_df
 
+def make_image_from_sample(sample): # for later visualize the testing (normal and reconstructed result)
+    return np.pad(sample, pad_width=(0,IMAGE_PAD), mode='constant', constant_values=0).reshape(IMAGE_DIM_X, IMAGE_DIM_Y)
+
 
 # -
 
@@ -170,7 +179,7 @@ def load_data(partition_id, num_partitions):
     # Get the processed data - shape (14962, 35) where:
     # - 14962 rows = samples
     # - 35 columns = features
-    data = get_processed_data()
+    data = get_processed_data(dataset_path)
     
     # Create DataFrame with default index and column handling
     # This maintains rows as samples and columns as features
@@ -292,10 +301,49 @@ def train(net, trainloader, epochs, learning_rate, device):
             print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}, "
                   f"Recon: {recon_loss.item():.4f}, KLD: {kld_loss.item():.4f}")
 
+# +
+# def test(net, testloader, device):
+#     """Validate the VAE network on the entire test set using tabular data."""
+#     total, loss = 0, 0.0
+#     recon_total, kld_total = 0.0, 0.0
+    
+#     with torch.no_grad():
+#         for batch in testloader:
+#             # Batch is already a tensor with shape [batch_size, num_features]
+#             features = batch.to(device)
+            
+#             # Forward pass through the VAE
+#             recon_features, mu, logvar = net(features)
+            
+#             # Compute losses
+#             recon_loss = F.mse_loss(recon_features, features)
+#             kld_loss = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+#             batch_loss = recon_loss + 0.05 * kld_loss
+            
+#             # Track statistics
+#             loss += batch_loss.item() * len(features)
+#             recon_total += recon_loss.item() * len(features)
+#             kld_total += kld_loss.item() * len(features)
+#             total += len(features)
+    
+#     avg_loss = loss / total
+#     avg_recon = recon_total / total
+#     avg_kld = kld_total / total
+    
+#     print(f"Test Loss: {avg_loss:.4f}, Recon: {avg_recon:.4f}, KLD: {avg_kld:.4f}")
+    
+#     return avg_loss
+# -
+
 def test(net, testloader, device):
-    """Validate the VAE network on the entire test set using tabular data."""
+    """Validate the VAE network on the entire test set and visualize worst reconstructions."""
     total, loss = 0, 0.0
     recon_total, kld_total = 0.0, 0.0
+    
+    # Lists to store all images, reconstructions and their errors
+    all_features = []
+    all_reconstructions = []
+    all_recon_errors = []
     
     with torch.no_grad():
         for batch in testloader:
@@ -315,6 +363,25 @@ def test(net, testloader, device):
             recon_total += recon_loss.item() * len(features)
             kld_total += kld_loss.item() * len(features)
             total += len(features)
+            
+            # Calculate per-sample reconstruction error
+            sample_recon_errors = torch.mean(torch.square(recon_features - features), dim=1)
+            
+            # Store all samples
+            for i in range(len(features)):
+                all_features.append(features[i].cpu())
+                all_reconstructions.append(recon_features[i].cpu())
+                all_recon_errors.append(sample_recon_errors[i].item())
+    
+    # Convert lists to numpy arrays
+    all_recon_errors = np.array(all_recon_errors)
+    
+    # Get the indices of the 10 worst reconstructed samples
+    worst10 = np.argsort(all_recon_errors)[-10:][::-1]
+    
+    # Calculate average reconstruction error
+    avg_recon_error = np.mean(all_recon_errors)
+    print(f"Average reconstruction error: {avg_recon_error:.4f}")
     
     avg_loss = loss / total
     avg_recon = recon_total / total
@@ -322,7 +389,47 @@ def test(net, testloader, device):
     
     print(f"Test Loss: {avg_loss:.4f}, Recon: {avg_recon:.4f}, KLD: {avg_kld:.4f}")
     
+    
+    plt.figure(figsize=(20, 4))
+    for i, idx in enumerate(worst10):
+        # Get the feature size
+        feature_size = all_features[idx].shape[0]
+        
+        # For features with size 35, we can use 7x5 dimensions
+        if feature_size == 35:
+            height, width = 7, 5
+        else:
+            # Try to find reasonable dimensions - prefer width > height
+            factors = []
+            for j in range(1, int(np.sqrt(feature_size)) + 1):
+                if feature_size % j == 0:
+                    factors.append((j, feature_size // j))
+            
+            # Choose dimensions closest to a reasonable aspect ratio
+            if factors:
+                factors.sort(key=lambda x: abs(x[1]/x[0] - 1.5))
+                height, width = factors[0]
+            else:
+                height, width = 1, feature_size
+        
+        # Plot original image
+        plt.subplot(2, 10, i + 1)
+        plt.imshow(all_features[idx].reshape(height, width).numpy(), cmap='gray')
+        plt.title("Original")
+        plt.axis('off')
+        
+        # Plot reconstructed image
+        plt.subplot(2, 10, i + 11)
+        plt.imshow(all_reconstructions[idx].reshape(height, width).numpy(), cmap='gray')
+        plt.title(f"RE {all_recon_errors[idx]:.3f}")
+        plt.axis('off')
+    
+    plt.tight_layout()
+    plt.savefig('vae_worst_reconstructions.png')
+    #plt.show()
+    
     return avg_loss
+
 
 def generate(net, image):
     """Reproduce the input with trained VAE."""
@@ -336,6 +443,22 @@ def set_weights(net, parameters):
     params_dict = zip(net.state_dict().keys(), parameters)
     state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
     net.load_state_dict(state_dict, strict=True)
+
+
+def create_run_dir(config: UserConfig) -> Path:
+    """Create a directory where to save results from this run."""
+    # Create output directory given current timestamp
+    current_time = datetime.now()
+    run_dir = current_time.strftime("%Y-%m-%d/%H-%M-%S")
+    # Save path is based on the current directory
+    save_path = Path.cwd() / f"outputs/{run_dir}"
+    save_path.mkdir(parents=True, exist_ok=False)
+
+    # Save run config as json
+    with open(f"{save_path}/run_config.json", "w", encoding="utf-8") as fp:
+        json.dump(config, fp)
+
+    return save_path, run_dir
 
 # +
 # Centralized testing whether the model could train

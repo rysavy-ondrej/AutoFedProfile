@@ -31,10 +31,15 @@ class NetworkProfilingClient(NumPyClient):
         return get_weights(self.net), len(self.trainloader), {}
 
     def evaluate(self, parameters, config):
+#         """Evaluate the model on the data this client has."""
+#         set_weights(self.net, parameters)
+#         loss = test(self.net, self.testloader, self.device)
+#         return float(loss), len(self.testloader), {}
         """Evaluate the model on the data this client has."""
         set_weights(self.net, parameters)
         loss = test(self.net, self.testloader, self.device)
-        return float(loss), len(self.testloader), {}
+        # Return the loss as part of the metrics dictionary as well
+        return float(loss), len(self.testloader), {"loss": float(loss)}
 
 
 def client_fn(context: Context):
