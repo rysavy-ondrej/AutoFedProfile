@@ -1,25 +1,10 @@
----
-tags: [basic, vision, fds]
-dataset: [CIFAR-10]
-framework: [torch, torchvision]
----
-
 # Federated Variational Autoencoder with PyTorch and Flower
 
-This example demonstrates how a variational autoencoder (VAE) can be trained in a federated way using the Flower framework. This example uses [Flower Datasets](https://flower.ai/docs/datasets/) to download, partition and preprocess the CIFAR-10 dataset.
+This example demonstrates how a variational autoencoder (VAE) can be trained in a federated way using the Flower framework.
 
 ## Set up the project
 
 ### Clone the project
-
-Start by cloning the example project:
-
-```shell
-git clone --depth=1 https://github.com/adap/flower.git _tmp \
-              && mv _tmp/examples/pytorch-federated-variational-autoencoder . \
-              && rm -rf _tmp && cd pytorch-federated-variational-autoencoder
-```
-
 This will create a new directory called `pytorch-federated-variational-autoencoder` with the following structure:
 
 ```shell
@@ -33,12 +18,16 @@ pytorch-federated-variational-autoencoder
 └── pyproject.toml      # Project metadata like dependencies and configs
 ```
 
-### Install dependencies and project
+### Setup Environment
 
-Install the dependencies defined in `pyproject.toml` as well as the `fedvaeexample` package.
+* pull & run the environment or build the environment by yourself
+```bash
+docker run -it --rm --name fl_autoencoder --gpus all --ipc=host -p 8888:8888 -v ./:/workspace allenlin316/fl_autoencoder:latest
+```
+* Actiate the `virtualenv` which has all the packages required by the flower (once inside the docker container)
 
 ```bash
-pip install -e .
+source /usr/local/venv/pytorch-FedAuto-env/bin/activate
 ```
 
 ## Run the Project
