@@ -1,9 +1,3 @@
----
-tags: [basic, vision, fds]
-dataset: [CCCS-CIC-AndMal-2020, CIC-AAGM2017]
-framework: [torch, torchvision]
----
-
 # Federated Variational Autoencoder with PyTorch and Flower
 
 This example demonstrates how a variational autoencoder (VAE) can be trained in a federated way using the Flower framework.
@@ -30,7 +24,7 @@ pytorch-federated-variational-autoencoder
 ```bash
 docker run -it --rm --name fl_autoencoder --gpus all --ipc=host -p 8888:8888 -v ./:/workspace allenlin316/fl_autoencoder:latest
 ```
-* Actiate the `virtualenv` which has all the packages required by the flower
+* Actiate the `virtualenv` which has all the packages required by the flower (once inside the docker container)
 
 ```bash
 source /usr/local/venv/pytorch-FedAuto-env/bin/activate
