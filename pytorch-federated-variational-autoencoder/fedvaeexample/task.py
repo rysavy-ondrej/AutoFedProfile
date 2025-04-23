@@ -22,17 +22,18 @@ from sklearn.compose import ColumnTransformer
 from flwr.common.typing import UserConfig
 from pathlib import Path
 from datetime import datetime
+from flwr.common import Context
 
 # ## Constant setup
 
-RECORD_SEQUENCE_SIZE=20
+RECORD_SEQUENCE_SIZE = 20
 tls_columns_names = np.array([f"tls.rec.{i}" for i in range(RECORD_SEQUENCE_SIZE)])
-dataset_path = "/workspace/datasets/desktop.tls/*.json" # replace with the dataset
+dataset_path = "/workspace/datasets/cic-aa.normal.tls/*.json" # replace with the dataset
 
 # ## Model Definition
 
 class Net(torch.nn.Module):
-    def __init__(self, input_dim=35, latent_dim=10, hidden_dim=64):
+    def __init__(self, input_dim=54, latent_dim=10, hidden_dim=64):
         """
         VAE for tabular data.
         

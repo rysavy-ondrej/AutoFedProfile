@@ -1,6 +1,11 @@
 #System trash folder
 .Trash-0/
+
 #Ignore all Jupyter notebook checkpoints recursively
-notebooks/.ipynb_checkpoints/ pytorch-federated-variational-autoencoder/.ipynb_checkpoints/
+.ipynb_checkpoints
+
 #Ignore all Python __pycache__ folders recursively
-**/__pycache__/
+__pycache__/
+
+# Ignore the saved model
+*.pth

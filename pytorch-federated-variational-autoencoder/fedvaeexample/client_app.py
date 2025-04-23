@@ -10,7 +10,7 @@ from flwr.common import Context
 class NetworkProfilingClient(NumPyClient):
     def __init__(self, trainloader, testloader, local_epochs, learning_rate):
         #self.net = Net()
-        input_dim = 35  # Your data has 35 features
+        input_dim = 54  # Your data has 35 features
         self.net = Net(input_dim=input_dim, latent_dim=10, hidden_dim=64)
         self.trainloader = trainloader
         self.testloader = testloader

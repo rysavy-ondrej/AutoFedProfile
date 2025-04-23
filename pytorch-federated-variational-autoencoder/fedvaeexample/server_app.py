@@ -144,7 +144,7 @@ def server_fn(context: Context):
     # partitioning is not needed.
     # We make use of the "test" split only
     # global_test_set = load_dataset("zalando-datasets/fashion_mnist")["test"]
-    test_dataset = get_data("/workspace/datasets/desktop.tls/*.json")
+    test_dataset = get_data("/workspace/datasets/cic-aa.normal.tls/*.json")
     
     testloader = DataLoader(
         #global_test_set.with_transform(apply_eval_transforms),
