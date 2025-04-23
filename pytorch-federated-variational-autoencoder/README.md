@@ -11,15 +11,6 @@ This example demonstrates how a variational autoencoder (VAE) can be trained in 
 ## Set up the project
 
 ### Clone the project
-
-Start by cloning the example project:
-
-```shell
-git clone --depth=1 https://github.com/adap/flower.git _tmp \
-              && mv _tmp/examples/pytorch-federated-variational-autoencoder . \
-              && rm -rf _tmp && cd pytorch-federated-variational-autoencoder
-```
-
 This will create a new directory called `pytorch-federated-variational-autoencoder` with the following structure:
 
 ```shell
@@ -35,10 +26,11 @@ pytorch-federated-variational-autoencoder
 
 ### Install dependencies and project
 
-Install the dependencies defined in `pyproject.toml` as well as the `fedvaeexample` package.
+* pull the envir
+* Install the dependencies defined in `pyproject.toml` as well as the `fedvaeexample` package.
 
 ```bash
-pip install -e .
+
 ```
 
 ## Run the Project
