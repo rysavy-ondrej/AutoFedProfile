@@ -6,6 +6,13 @@
 
 #Ignore all Python __pycache__ folders recursively
 __pycache__/
+__init__.py
 
 # Ignore the saved model
 *.pth
+*.h5
+
+*.pb
+variables/
+assets/
+wandb/
