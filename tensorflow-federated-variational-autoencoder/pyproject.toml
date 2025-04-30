@@ -26,10 +26,10 @@ clientapp = "tensorflow_federated_variational_autoencoder.client_app:app"
 [tool.flwr.app.config]
 use-wandb = false
 num-server-rounds = 3
-local-epochs = 3
+local-epochs = 5
 learning-rate = 0.001
-fraction-fit = 0.25
-fraction-evaluate = 0.5
+fraction-fit = 1
+fraction-evaluate = 1
 server-device = "cuda:0"
 dataset-path = "/workspace/datasets/cic-aa.normal.tls/*.json" # to train and validate the network
 
@@ -37,5 +37,5 @@ dataset-path = "/workspace/datasets/cic-aa.normal.tls/*.json" # to train and val
 default = "local-simulation"
 
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 2
+options.num-supernodes = 3
 options.backend.init_args.num_gpus = 1 # Expose a single GPU to the simulation

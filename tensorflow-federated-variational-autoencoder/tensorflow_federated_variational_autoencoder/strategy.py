@@ -16,7 +16,6 @@ import os
 PROJECT_NAME = "tensorflow_federated_variational_autoencoder"
 
 
-# +
 class CustomFedAvg(FedAvg):
     """A class that behaves like FedAvg but has extra functionality.
 

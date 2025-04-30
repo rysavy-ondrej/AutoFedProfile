@@ -1,1 +1,0 @@
-{"use-wandb": true, "num-server-rounds": 3, "local-epochs": 3, "learning-rate": 0.001, "fraction-fit": 0.25, "fraction-evaluate": 0.5, "server-device": "cuda:0"}

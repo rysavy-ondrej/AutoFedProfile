@@ -366,42 +366,42 @@ def test(net, testloader, device=None):
     print(f"Test Loss: {avg_loss:.4f}, Recon: {avg_recon:.4f}, KLD: {avg_kld:.4f}")
     
     # Visualization
-    plt.figure(figsize=(20, 4))
-    for i, idx in enumerate(worst10):
-        # Get the feature size
-        feature_size = all_features[idx].shape[0]
+#     plt.figure(figsize=(20, 4))
+#     for i, idx in enumerate(worst10):
+#         # Get the feature size
+#         feature_size = all_features[idx].shape[0]
         
-        # For features with size 35, we can use 7x5 dimensions
-        if feature_size == 35:
-            height, width = 7, 5
-        else:
-            # Try to find reasonable dimensions - prefer width > height
-            factors = []
-            for j in range(1, int(np.sqrt(feature_size)) + 1):
-                if feature_size % j == 0:
-                    factors.append((j, feature_size // j))
+#         # For features with size 35, we can use 7x5 dimensions
+#         if feature_size == 35:
+#             height, width = 7, 5
+#         else:
+#             # Try to find reasonable dimensions - prefer width > height
+#             factors = []
+#             for j in range(1, int(np.sqrt(feature_size)) + 1):
+#                 if feature_size % j == 0:
+#                     factors.append((j, feature_size // j))
             
-            # Choose dimensions closest to a reasonable aspect ratio
-            if factors:
-                factors.sort(key=lambda x: abs(x[1]/x[0] - 1.5))
-                height, width = factors[0]
-            else:
-                height, width = 1, feature_size
+#             # Choose dimensions closest to a reasonable aspect ratio
+#             if factors:
+#                 factors.sort(key=lambda x: abs(x[1]/x[0] - 1.5))
+#                 height, width = factors[0]
+#             else:
+#                 height, width = 1, feature_size
         
-        # Plot original image
-        plt.subplot(2, 10, i + 1)
-        plt.imshow(all_features[idx].reshape(height, width), cmap='gray')
-        plt.title("Original")
-        plt.axis('off')
+#         # Plot original image
+#         plt.subplot(2, 10, i + 1)
+#         plt.imshow(all_features[idx].reshape(height, width), cmap='gray')
+#         plt.title("Original")
+#         plt.axis('off')
         
-        # Plot reconstructed image
-        plt.subplot(2, 10, i + 11)
-        plt.imshow(all_reconstructions[idx].reshape(height, width), cmap='gray')
-        plt.title(f"RE {all_recon_errors[idx]:.3f}")
-        plt.axis('off')
+#         # Plot reconstructed image
+#         plt.subplot(2, 10, i + 11)
+#         plt.imshow(all_reconstructions[idx].reshape(height, width), cmap='gray')
+#         plt.title(f"RE {all_recon_errors[idx]:.3f}")
+#         plt.axis('off')
     
-    plt.tight_layout()
-    plt.savefig('vae_worst_reconstructions.png')
+#     plt.tight_layout()
+#     plt.savefig('vae_worst_reconstructions.png')
     
     return avg_loss
 

@@ -1,1 +1,0 @@
-{"use-wandb": false, "num-server-rounds": 3, "local-epochs": 1, "learning-rate": 0.001, "fraction-fit": 0.25, "fraction-evaluate": 0.5, "server-device": "cuda:0", "test-dataset": "/workspace/datasets/cic-aa.normal.tls/*.json", "input_dim": 54}
