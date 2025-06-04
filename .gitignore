@@ -16,3 +16,5 @@ __init__.py
 variables/
 assets/
 wandb/
+home-lan/data
+
