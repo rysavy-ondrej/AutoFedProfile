@@ -10,11 +10,11 @@ This dataset captures network connections within a home network environment, org
 
 | Host | Address | Active Interval | Total connections | 
 |------| -------| ------------------- | ------ | 
-| MacMini | 192.168.1.197 | 5/6/2025 2:48:11 PM +00:00 - 5/27/2025 3:02:29 PM +00:00 | 1 283 415 |
-| Google ChromeCast | 192.168.1.185 | 5/6/2025 2:51:22 PM +00:00 - 5/27/2025 3:02:32 PM +00:00 | 128 826 |
-| Sonos Wifi Speaker  | 192.168.1.190 | 5/6/2025 2:48:14 PM +00:00 - 5/27/2025 3:02:38 PM +00:00  | 215 284 |
-| iRobot | 192.168.1.188 | 5/6/2025 2:48:19 PM +00:00 - 5/27/2025 3:02:13 PM +00:00 | 63 409 |
-| Samsung GalaxyTab | 192.168.1.198 | 5/6/2025 2:48:21 PM +00:00 - 5/27/2025 3:00:14 PM +00:00 | 176 303 |
+| MacMini | 192.168.1.197 | 5/6/2025 2:48:11 PM +00:00 - 5/27/2025 3:02:29 PM +00:00 |  |
+| Google ChromeCast | 192.168.1.185 | 5/6/2025 2:51:22 PM +00:00 - 5/27/2025 3:02:32 PM +00:00 |  |
+| Sonos Wifi Speaker  | 192.168.1.190 | 5/6/2025 2:48:14 PM +00:00 - 5/27/2025 3:02:38 PM +00:00  |  |
+| iRobot | 192.168.1.188 | 5/6/2025 2:48:19 PM +00:00 - 5/27/2025 3:02:13 PM +00:00 |  |
+| Samsung GalaxyTab | 192.168.1.198 | 5/6/2025 2:48:21 PM +00:00 - 5/27/2025 3:00:14 PM +00:00 |  |
 
 
 The data objects stands for TLS connections. They have the following format:
