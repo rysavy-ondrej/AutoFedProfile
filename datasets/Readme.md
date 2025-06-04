@@ -13,6 +13,7 @@ Normal datasets are used to establish the baseline profile of regular, benign ne
 | `mobile.tls`        | A collection of communications from selected mobile applications.                            |
 | `windows.tls`       | A comprehensive collection of communications from a wide range of Windows applications.        |
 | `cic-aa.normal.tls` | Benign Android communication (1,500 apps) from CICAAGM dataset.                          |
+| `homelan.tls` | Communication from LAN (various hosts). Normal traffic.                          |
 
 ## Malicious Datasets
 
