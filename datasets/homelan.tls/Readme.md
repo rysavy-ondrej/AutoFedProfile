@@ -6,16 +6,7 @@ This dataset captures network connections within a home network environment, org
 * File Generation: Input files are generated every 10 minutes, each containing logs from 10 consecutive 1-minute windows.
 * File Organization: Connection records are grouped by the source IP address, representing individual hosts within the network. Each host has a separate subfolder containing its own connection logs.
 
-## Host Information
-
-| Host | Address | Active Interval | Total connections | 
-|------| -------| ------------------- | ------ | 
-| MacMini | 192.168.1.197 | 5/6/2025 2:48:11 PM +00:00 - 5/27/2025 3:02:29 PM +00:00 |  |
-| Google ChromeCast | 192.168.1.185 | 5/6/2025 2:51:22 PM +00:00 - 5/27/2025 3:02:32 PM +00:00 |  |
-| Sonos Wifi Speaker  | 192.168.1.190 | 5/6/2025 2:48:14 PM +00:00 - 5/27/2025 3:02:38 PM +00:00  |  |
-| iRobot | 192.168.1.188 | 5/6/2025 2:48:19 PM +00:00 - 5/27/2025 3:02:13 PM +00:00 |  |
-| Samsung GalaxyTab | 192.168.1.198 | 5/6/2025 2:48:21 PM +00:00 - 5/27/2025 3:00:14 PM +00:00 |  |
-
+## Dataset Fields
 
 The data objects stands for TLS connections. They have the following format:
 
@@ -52,3 +43,29 @@ In addition to TLS connection features, the lenght of first records are provided
 
 ```json
 "tls.rec": [-538, 122, 1, 42, 2606, 281, 53, -1, -53, -570, 74, 74, 733, -570, 733]
+```
+
+## Host TLS Connection Overview
+
+This section summarizes the captured TLS connections from various hosts within the monitored network. Each row in the table represents a device identified by its local IP address, including the time range of observation, total number of TLS connections, and a brief description of the device type (when known).
+
+| Host          | Start                 | End                  | Tls Connections | Description                 |
+|---------------| ----------------------| -------------------- | --------------- | --------------------------- |
+| 192.168.1.169	| 2025-05-11 15:17:09Z	| 2025-06-13 09:06:10Z | 26365           | Apple iPad |
+| 192.168.1.172	| 2025-05-11 09:18:03Z	| 2025-06-13 09:06:58Z | 44492           | Motorola Edge 40  |
+| 192.168.1.174	| 2025-05-07 19:24:00Z	| 2025-06-13 05:21:20Z | 20091           | Motorola Moto G |
+| 192.168.1.181	| 2025-05-06 16:44:00Z	| 2025-06-13 04:17:30Z | 60253           | Motorola Edge 30 |
+| 192.168.1.185	| 2025-05-06 14:51:22Z	| 2025-06-09 18:21:11Z | 8579            | Google ChromeCast |
+| 192.168.1.197	| 2025-05-06 14:48:11Z	| 2025-06-13 09:06:58Z | 227962          | Apple MacMini |
+| 192.168.1.198	| 2025-05-06 14:48:21Z	| 2025-06-13 04:22:51Z | 46400           | Samsung GalaxyTab |
+
+Note: The total number of TLS connections represents the number of individual TLS sessions initiated by each host over the observation period.
+
+### TLS Connection Activity Histograms per Host
+
+The histograms below illustrate the daily TLS connection activity for each host over the monitored period. The X-axis denotes the day of the year (e.g., day 126 = May 5), while the Y-axis shows the number of connections recorded on that day. 
+
+![192.168.1.169](doc/hist-192.168.1.169.png) ![192.168.1.172](doc/hist-192.168.1.172.png)
+![192.168.1.174](doc/hist-192.168.1.174.png) ![192.168.1.181](doc/hist-192.168.1.181.png)
+![192.168.1.185](doc/hist-192.168.1.185.png) ![192.168.1.197](doc/hist-192.168.1.197.png)
+![192.168.1.198](doc/hist-192.168.1.198.png) 
