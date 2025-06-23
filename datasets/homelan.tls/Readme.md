@@ -58,6 +58,10 @@ This section summarizes the captured TLS connections from various hosts within t
 | 192.168.1.185	| 2025-05-06 14:51:22Z	| 2025-06-09 18:21:11Z | 8579            | Google ChromeCast |
 | 192.168.1.197	| 2025-05-06 14:48:11Z	| 2025-06-13 09:06:58Z | 227962          | Apple MacMini |
 | 192.168.1.198	| 2025-05-06 14:48:21Z	| 2025-06-13 04:22:51Z | 46400           | Samsung GalaxyTab |
+| 192.168.111.32 | 2025-05-06 10:26:00Z	| 2025-06-20 07:23:00Z |                 | Windows 10 |
+| 192.168.1.X | 2025-05-06 15:38:00Z	| 2025-06-12 09:45:00Z |                 | Windows 11 (multiple stations) |
+
+X = { 134, 135, 136, 138,  141, 143, 145, 147, 151, 152, 153, 155, 156, 158, 159, 160, 162, 165, 171, 175, 178, 183 }
 
 Note: The total number of TLS connections represents the number of individual TLS sessions initiated by each host over the observation period.
 
