@@ -114,3 +114,14 @@ Notes
 * The dataset structure ensures flexibility — researchers can isolate or combine levels (e.g., train models only on system-level labels or on combined application–user context).
 * The meta section ensures reproducibility, traceability, and compatibility with federated learning setups by documenting the capture source and environment.
 * The schema can be extended with additional attributes such as confidence or annotation_method for semi-automated labeling pipelines.
+
+Requirements
+* The number of input samples for the model depends on its complexity, a rough estimate:
+
+| Data Type                                   | Dimensionality | Typical Range for “Reasonable” Autoencoder Training |
+| ------------------------------------------- | -------------- | --------------------------------------------------- |
+| Simple tabular (10–50 features)             | Low            | **10³ – 10⁴ samples**                               |
+| Network flow features (e.g., 50–200 fields) | Medium         | **10⁴ – 10⁵ samples**                               |
+| Image data (e.g., 64×64 grayscale)          | High           | **10⁵ – 10⁶ samples**                               |
+| Audio / high-dimensional sequences          | Very high      | **>10⁶ samples**                                    |
+
