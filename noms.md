@@ -9,15 +9,15 @@ Federated learning is applied to enable distributed model sharing without exposi
 ## Experiments
 
 All experiments are implemented as interactive Python notebooks:
-* [Autoencoder Cross-Validation](notebooks/noms.autoencoder_crossval.ipynb) -- Demonstrates local TLS flow profiling and reconstruction error–based evaluation.
+* [Autoencoder Cross-Validation](noms/notebooks/noms.autoencoder_crossval.ipynb) -- Demonstrates local TLS flow profiling and reconstruction error–based evaluation.
 
 ## Created Datasets
 
 | Dataset | Connections |	Description |
 | ------- | ----------- | ------------- |
-| [BUT-WAPP2024](datasets/BUT-WAPP2024/) | 14,962	| Communication of selected Windows applications captured in sandboxed environments. |
-| [BUT-SOHO2025](datasets/BUT-SOHO2025/)  |	653,644	 | TLS connections collected from multiple real devices on a SOHO network for device profiling. |
-| [BUT-TMF2024](datasets/BUT-TMF2024/)  |	16,742	| Network traces from malware samples analyzed in the Tria.ge sandbox, containing both malicious and benign system traffic. |
+| [BUT-WAPP2024](noms/datasets/BUT-WAPP2024/) | 14,962	| Communication of selected Windows applications captured in sandboxed environments. |
+| [BUT-SOHO2025](noms/datasets/BUT-SOHO2025/)  |	653,644	 | TLS connections collected from multiple real devices on a SOHO network for device profiling. |
+| [BUT-TMF2024](noms/datasets/BUT-TMF2024/)  |	16,742	| Network traces from malware samples analyzed in the Tria.ge sandbox, containing both malicious and benign system traffic. |
 
 ## Method Overview
 * Feature extraction: Based on extended TLS flow metadata (protocol versions, cipher suites, extensions, record size sequences).

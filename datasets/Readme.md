@@ -1,160 +1,95 @@
-# Datasets
+# The Dataset
 
-This folder contains several datasets for network communication analysis. The datasets are divided into two main categories: **Normal Datasets** and **Malicious Datasets**.
+The purpose of this dataset is to provide **multi-source, multi-level annotations of TLS connections**, enabling research on encrypted traffic analysis, OS fingerprinting, application profiling, and malware behavior characterization.  
+All packet captures are preprocessed into normalized **connection-level JSON records**, enriched with structured metadata describing sample origin, system attributes, and (when applicable) malware classification.
 
-## Normal Datasets
+The data format is defined in [Data.md](Data.md).
 
-Normal datasets are used to establish the baseline profile of regular, benign network communication. These datasets should not contain any malicious or attack-related traffic.
+## Usage
 
-| **Name**            | **Description**                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------- |
-| `desktop.tls`       | A collection of communications from various Windows applications.                          |
-| `iscx.tls`          | Various communications from applications, including background noise.                      |
-| `mobile.tls`        | A collection of communications from selected mobile applications.                            |
-| `windows.tls`       | A comprehensive collection of communications from a wide range of Windows applications.        |
-| `cic-aa.normal.tls` | Benign Android communication (1,500 apps) from CICAAGM dataset.                          |
-| `homelan.tls` | Communication from LAN (various hosts). Normal traffic.                          |
+All datasets are stored in the Apache Parquet format, a columnar storage format optimized for efficient analytics and fast data loading. You can load an entire dataset (i.e., a directory containing multiple Parquet files) using the following code:
 
-## Malicious Datasets
+```py
+import pyarrow.dataset as ds
 
-Malicious datasets contain both benign and attack communications. They are used to analyze, detect, and study malicious network activity.
-
-| **Name**                | **Description**                                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------------- |
-| `cic-aa.adware.tls`     | Android Adware communication from CICAAGM dataset.                                           |
-| `cis-aa.malware.tls`    | Android general malware communication from CICAAGM dataset.                                  |
-
-
-## Format
-
-Each document contains JSON records (NDJSON) for TLS connections. The following JSON fields are presented:
-
-| Field      | Description                                                                  |
-|------------|------------------------------------------------------------------------------|
-| pt         | protocol type (e.g., 6 for TCP)                                              |
-| sa         | source address (client)                                                      |
-| sp         | source port (client)                                                         |
-| da         | destination address (server)                                                 |
-| dp         | destination port (server)                                                    |
-| ps         | packets from client to server                                                |
-| pr         | packets from server to client                                                |
-| bs         | octets (bytes) from client to server                                         |
-| br         | octets (bytes) from server to client                                         |
-| ts         | timestamp of the first packet (connection start)                             |
-| td         | connection duration (last packet timestamp minus ts)                         |
-| tls.cver   | TLS client version (from Client Hello), e.g., "0x0303"                       |
-| tls.ccs    | TLS client cipher suites as an array (from Client Hello)                     |
-| tls.cext   | TLS client extensions as an array                                            |
-| tls.csg    | TLS client supported groups as an array                                      |
-| tls.csv    | TLS client supported versions                                                |
-| tls.alpn   | TLS ALPN protocols as an array (e.g., ["h2", "http/1.1"])                    |
-| tls.sni    | TLS Server Name Indication (SNI) from Client Hello                           |
-| tls.sver   | TLS server version (from Server Hello), e.g., "0x0303"                       |
-| tls.scs    | TLS server cipher suite (from Server Hello), e.g., "0xc030"                  |
-| tls.sext   | TLS server extensions as an array                                            |
-| tls.ssv    | TLS server supported versions (for TLS 1.3)                                  |
-| tls.ja3    | JA3 fingerprint for the TLS client                                           |
-| tls.ja3s   | JA3S fingerprint for the TLS server                                          |
-| tls.ja4    | JA4 fingerprint for the TLS client (alternative fingerprint)                 |
-| tls.ja4s   | JA4S fingerprint for the TLS server (alternative fingerprint)                |
-| tls.rec    | array of individual TLS record lengths observed in the communication         |
-| sample     | sample field (for testing), value can be "nil" if not provided               |
-
-The TLS record array contains TLS record sizes. A negative number represents communication from client to server, while a positive number represents communication in the opposite direction.
-
-Example:
-
+dataset = ds.dataset(parquet_folder, format="parquet")
+df = dataset.to_table().flatten().to_pandas()
 ```
-{
-    "pt": 6,
-    "sa": "172.17.147.231",
-    "sp": 49687,
-    "da": "3.211.225.17",
-    "dp": 443,
-    "ps": 3,
-    "pr": 4,
-    "bs": 587,
-    "br": 3418,
-    "ts": 1721272491.362,
-    "td": 0.701,
-    "tls.cver": "0x0303",
-    "tls.ccs": [
-        "C02C",
-        "C02B",
-        "C030",
-        "C02F",
-        "C024",
-        "C023",
-        "C028",
-        "C027",
-        "C00A",
-        "C009",
-        "C014",
-        "C013",
-        "009D",
-        "009C",
-        "003D",
-        "003C",
-        "0035",
-        "002F",
-        "000A"
-    ],
-    "tls.cext": [
-        "0000",
-        "0005",
-        "000A",
-        "000B",
-        "000D",
-        "0023",
-        "0017",
-        "FF01"
-    ],
-    "tls.csg": [
-        "0804",
-        "0805",
-        "0806",
-        "0401",
-        "0501",
-        "0201",
-        "0403",
-        "0503",
-        "0203",
-        "0202",
-        "0601",
-        "0603"
-    ],
-    "tls.csv": [],
-    "tls.alpn": [],
-    "tls.sni": "www.biglybt.com",
-    "tls.sver": "0x0303",
-    "tls.scs": "0xc02f",
-    "tls.sext": [
-        "0000",
-        "000B",
-        "FF01",
-        "0023",
-        "0017"
-    ],
-    "tls.ssv": [],
-    "tls.ja3": "a0e9f5d64349fb13191bc781f81f42e1",
-    "tls.ja3s": "2ab44dd8c27bdce434a961463587356a",
-    "tls.ja4": "t12d190800_d83cc789557e_7af1ed941c26",
-    "tls.ja4s": "t120500_c02f_7c777c72cf5b",
-    "tls.rec": [
-        -177,
-        99,
-        4953,
-        333,
-        4,
-        -70,
-        -1,
-        -40,
-        115,
-        1,
-        40,
-        -112,
-        537
-    ],
-    "sample": "BiglySoftware.BiglyBT"
-}
-```
+
+This snippet:
+
+* loads all Parquet files in the specified directory as a unified dataset,
+* converts the Arrow table into a flattened representation (useful if nested fields are present),
+* and returns the result as a Pandas DataFrame.
+
+## Collections
+
+### 1. `soho`
+This dataset contains TLS flows collected from an operational small-office/home-office (SOHO) network.
+It provides realistic, heterogeneous encrypted traffic suitable for research on device profiling, OS fingerprinting, and behavioral modeling.
+
+**Files:**
+
+* soho.parquet/ – directory containing TLS connection data.
+
+* soho.meta.parquet – file-level metadata describing devices and inferred system properties.
+
+**Characteristics**
+
+* Traffic originates from desktops, laptops, smartphones, tablets, IoT devices, and network infrastructure.
+* Raw PCAPs do not contain explicit labels; therefore no direct ground-truth OS is available.
+* Operating system annotations are inferred using SNI-based OS fingerprinting, including mappings to OS-unique domains (high-confidence indicators).
+* Metadata is available at the file level and can be propagated to all flows belonging to the same source IP within the day.
+
+**Metadata includes:**
+- `host.ip`
+- `system.os` (inferred)
+- `system.os_detection.{method,pattern,confidence,timestamp}`
+
+The metadata can be used to label the communication of each IP address throughout the day.
+Because OS detection is based on heuristics and may be ambiguous for some hosts, additional disambiguation strategies (e.g., majority voting, confidence weighting, or temporal smoothing) are recommended to determine the most probable OS identity.
+
+### 2. `triage`
+TLS connections from **Triage sandbox executions** of malware and benign samples.
+
+**Characteristics:**
+- Each sample is executed in a controlled environment (Windows virtual machine).
+- The sandbox provides **ground-truth labels**:
+  - malware family
+  - severity/score
+  - OS version of the sandbox
+  - system-level connections triggered indirectly by malware runtime
+- Both malware-driven and OS-driven TLS connections are included.
+
+**Metadata includes:**
+- `sample.{src,hash}`
+- `system.os`
+- `system.service` (if the connection matches known system services)
+- `malware.{family,score}` for malicious samples
+- Differentiation between malware-initiated and system-generated connections.
+
+
+### 3. `winapps`
+TLS connections captured during execution of **Windows applications** in a Windows Sandbox environment.
+
+**Characteristics:**
+- Each run focuses on a specific application (e.g., iTunes, browsers, updaters).
+- Ground-truth for the **application generating the TLS connection** is known.
+- OS is fixed and known (Windows 10/11 sandbox).
+- Useful for supervised application-level TLS classification and fingerprinting.
+
+**Metadata includes:**
+- `sample.{src,hash}`
+- `system.os`
+- `application.name` (process associated with the TLS connection)
+
+
+# Summary
+
+This dataset provides three complementary sources of annotated TLS traffic:
+
+| Dataset       | Source Environment | Annotation Level | Use Cases |
+|---------------|--------------------|------------------|-----------|
+| `homelan` | Real network       | OS (inferred via SNI) | Passive OS fingerprinting, LAN modeling |
+| `triage`  | Malware sandbox    | OS, malware family, score | Malware TLS profiling, behavioral analysis |
+| `winapps` | Windows Sandbox    | Application, OS | Application TLS classification, software fingerprinting |
