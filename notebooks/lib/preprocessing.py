@@ -57,7 +57,7 @@ def extract_features(df):
     mlb.fit([])
     transformed = mlb.transform(df['tls.sext'])
     tls_sext_mlb = pd.DataFrame(transformed,columns=mlb.classes_)
-    print(mlb.classes_)
+    # print(mlb.classes_)
    
     # tls.ccs
     df['tls.ccs'] = df['tls.ccs'].apply(
@@ -134,7 +134,7 @@ def extract_features(df):
     records_data = pd.DataFrame( pad_sequences(df['tls.rec'].values, maxlen=RECORD_SEQUENCE_SIZE), columns=tls_columns_names)
     dataset = pd.concat([flow_data, tls_data, tls_sext_mlb, tls_ccs_mlb_renamed, tls_cext_mlb_renamed, 
                          tls_csg_mlb_renamed, tls_alpn_mlb_renamed, tls_csv_mlb_renamed, tls_ssv_mlb_renamed, records_data], axis=1).fillna(0)
-    print(dataset.shape)    
+    # print(dataset.shape)    
     return dataset
 #
 # Fits the preprocessor that contains scalers for numerical features and OneHotEncoder for categorical data.
