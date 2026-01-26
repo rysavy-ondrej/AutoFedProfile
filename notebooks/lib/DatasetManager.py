@@ -18,19 +18,19 @@ def _extract_application_name(m):
     """Extract metadata to the simple form -- application name from metadata."""
     if not isinstance(m, dict):
         return pd.NA
-    return m.get("name", pd.NA)
+    return (m.get("os") or pd.NA)
 
 def _extract_system_name(m):
     """Extract metadata to the simple form -- operating system name from metadata."""
     if not isinstance(m, dict):
         return pd.NA
-    return m.get("os", pd.NA)
+    return (m.get("os") or pd.NA)
 
 def _extract_service_name(m):
     """Extract metadata to the simple form -- operating service name from metadata."""
     if not isinstance(m, dict):
         return pd.NA
-    return m.get("service", pd.NA)
+    return (m.get("os") or pd.NA)
 
 # -------------------------------------------------------------
 # Malware Dataset
@@ -295,7 +295,120 @@ class WinappsDataset:
         print("Samples with application labeling:", len(self.df_tls))
         print("\nApplications:", self.applications())
         print("\nSamples per application:\n", self.samples_per_application())
-       
+
+from collections import defaultdict   
+def _get_label_mapping(df_label: pd.DataFrame):
+    df = df_label.copy()
+    # extract fields from structured column
+    df["ts"] = df["system.os_detection"].apply(
+        lambda x: x.get("ts") if isinstance(x, dict) else None
+    )
+    df["confidence"] = df["system.os_detection"].apply(
+        lambda x: x.get("confidence") if isinstance(x, dict) else None
+    )
+    # hour-level grouping key: YYYYMMDDTHH
+    df["ts_hour"] = df["ts"].str.slice(0, 11)
+
+    result = defaultdict(lambda: defaultdict(list))
+    for _, row in df.iterrows():
+        if pd.isna(row["ts_hour"]) or pd.isna(row["host.ip"]):
+            continue
+
+        result[row["ts_hour"]][row["host.ip"]].append(
+            (row["system.os"], row["confidence"])
+        )
+    # convert defaultdicts to dicts
+    # result = {k: dict(v) for k, v in result.items()}
+    return result 
+
+def _mapping_to_df(label_mapping:defaultdict) -> pd.DataFrame:
+    rows = []
+    for ts_hour, ip_map in label_mapping.items():
+        if not ip_map: continue
+        for ip, candidates in ip_map.items():
+            if not candidates:
+                continue
+            for os_name, conf in candidates:
+                if os_name is None or conf is None:
+                    continue
+                rows.append((ts_hour, ip, os_name, float(conf)))
+    return pd.DataFrame(rows, columns=["ts_hour", "ip", "os", "conf"])   
+def _best_os_per_key(map_df: pd.DataFrame) -> pd.DataFrame:
+    # sum weights per OS within (ts_hour, ip)
+    agg = (map_df
+           .groupby(["ts_hour", "ip", "os"], as_index=False)["conf"]
+           .sum())
+    # pick OS with max summed confidence for each (ts_hour, ip)
+    idx = agg.groupby(["ts_hour", "ip"])["conf"].idxmax()
+    best = agg.loc[idx, ["ts_hour", "ip", "os"]].rename(columns={"os": "meta.system_ext"})
+    return best    
 # -------------------------------------------------------------
 # SOHO Dataset
 # -------------------------------------------------------------
+class SohoDataset:
+    """
+    Manager for preprocessing, organizing, and splitting windows applications datasets.
+    """        
+    def __init__(self, df_tls: pd.DataFrame, df_label : pd.DataFrame):
+        self.df_tls = df_tls.copy()
+        label_mapping = _get_label_mapping(df_label)
+
+        # build lookup table once
+        map_df = _mapping_to_df(label_mapping)
+        best_df = _best_os_per_key(map_df)   # provides meta.system (external)
+
+        # vectorized hour key and ip key
+        self.df_tls["ts_hour"] = pd.to_datetime(self.df_tls["ts"], unit="s").dt.strftime("%Y%m%dT%H")
+        self.df_tls["ip"] = self.df_tls["sa"]
+
+        # internal OS (from flow itself)
+        self.df_tls["meta.system_int"] = self.df_tls["meta.system"].apply(_extract_system_name)
+        self.df_tls.drop(columns=["meta.system"], inplace=True)
+
+        # merge external OS labels
+        self.df_tls = self.df_tls.merge(best_df, on=["ts_hour", "ip"], how="left")
+        # best_df provides: meta.system  -> treat as external
+        self.df_tls.rename(columns={"meta.system": "meta.system_ext"}, inplace=True)
+
+        # ---- COALESCE: int has higher priority than ext ----
+        self.df_tls["meta.system"] = (
+            self.df_tls["meta.system_int"]
+            .combine_first(self.df_tls["meta.system_ext"])
+        )
+
+        # cleanup
+        self.df_tls.drop(columns=["meta.system_int", "meta.system_ext", "ts_hour", "ip"], inplace=True)
+
+        # set other columns
+        self.df_tls["meta.application"] = pd.NA
+        self.df_tls["meta.service"] = pd.NA
+        self.df_tls["meta.malware"] = pd.NA
+        self.df_tls["meta.host"] = pd.NA        # ??? 
+    @staticmethod
+    def load_from(path:str, path_label: str, max_rows: Optional[int] = None):
+        """
+        Load application dataset from parquet files and create a SohoDataset object.
+
+        This function loads parquet files from the specified path, filters for TLS connections,
+        and initializes a SohoDataset object with the filtered data.
+
+        Args:
+            path (str): The file path to the directory containing parquet files.
+
+        Returns:
+            SohoDataset: A SohoDataset object initialized with TLS connection data.
+
+        Raises:
+            FileNotFoundError: If the specified path does not exist.
+            ValueError: If no valid parquet files are found at the path.
+        """
+        df = load_parquet_files(parquet_folder=path, max_rows=max_rows)
+        df_tls = get_tls_connections(df)
+        df_label = load_parquet_files(parquet_folder=path_label, max_rows=max_rows)
+        return SohoDataset(df_tls, df_label)
+    # -------------------------------------------------------------
+    # Underlying dataframe
+    # -------------------------------------------------------------
+    @property
+    def dataframe(self): 
+        return self.df_tls
