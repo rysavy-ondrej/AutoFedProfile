@@ -22,7 +22,7 @@ This snippet:
 * converts the Arrow table into a flattened representation (useful if nested fields are present),
 * and returns the result as a Pandas DataFrame.
 
-The data can be filtered using [Parquet Compute Expression](see https://arrow.apache.org/docs/python/compute.html#filtering-by-expressions), for instance:
+The data can be filtered using [Parquet Compute Expression](https://arrow.apache.org/docs/python/compute.html#filtering-by-expressions), for instance:
 
 ```py
 import pyarrow.dataset as ds
@@ -106,5 +106,6 @@ This dataset provides three complementary sources of annotated TLS traffic:
 | `homelan` | Real network       | OS (inferred via SNI) | Passive OS fingerprinting, LAN modeling |
 | `triage`  | Malware sandbox    | OS, malware family, score | Malware TLS profiling, behavioral analysis |
 | `winapps` | Windows Sandbox    | Application, OS | Application TLS classification, software fingerprinting |
+
 
 
