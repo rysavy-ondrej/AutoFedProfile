@@ -33,7 +33,7 @@ dataset = ds.dataset(parquet_data_folder, format="parquet")
 filt = (
     pc.is_null(pc.field("meta.system.service")) &           # no service, that is pure malware connection
     (pc.field("meta.malware.family") == "asyncrat") &       # select single family (asyncrat)
-    (pc.field("td") > 10) &                                 # connection druation > 10s
+    (pc.field("td") > 10) &                                 # connection duration > 10s
     pc.starts_with(pc.field("meta.sample.id"), "250901")    # use meta.sample.id to get only a single day 2025-09-01
 )
 
