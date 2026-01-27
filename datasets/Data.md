@@ -43,9 +43,11 @@ All fields are optional unless stated otherwise. Missing values are represented 
 | `tls.ja3s` | string | JA3S fingerprint of the TLS server handshake. |
 | `tls.ja4s` | string | JA4S fingerprint of the TLS server handshake. |
 | `tls.sext` | array | ServerHello extensions. |
+| `tls.cver` | string | Client version. |
 | `tls.csg` | array | Client-supported signature algorithms. |
 | `tls.ccs` | array | Client-offered cipher suites. |
 | `tls.cext` | array | ClientHello extensions. |
+| `tls.sver` | string | Server version. |
 | `tls.ssv` | array | Server-supported protocol versions. |
 | `tls.csv` | array | Client-supported protocol versions. |
 | `tls.scs` | string | Server-selected cipher suite. |
