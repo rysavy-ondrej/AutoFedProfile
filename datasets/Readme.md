@@ -12,8 +12,8 @@ All datasets are stored in the Apache Parquet format, a columnar storage format 
 ```py
 import pyarrow.dataset as ds
 
-dataset = ds.dataset(parquet_folder, format="parquet")
-df = dataset.to_table().flatten().to_pandas()
+dataset = ds.dataset(parquet_data_folder, format="parquet")
+df = dataset.to_table().to_pandas()
 ```
 
 This snippet:
@@ -21,6 +21,27 @@ This snippet:
 * loads all Parquet files in the specified directory as a unified dataset,
 * converts the Arrow table into a flattened representation (useful if nested fields are present),
 * and returns the result as a Pandas DataFrame.
+
+The data can be filtered using [Parquet Compute Expression](https://arrow.apache.org/docs/python/compute.html#filtering-by-expressions), for instance:
+
+```py
+import pyarrow.dataset as ds
+import pyarrow.compute as pc
+
+dataset = ds.dataset(parquet_data_folder, format="parquet")
+
+filt = (
+    pc.is_null(pc.field("meta.system.service")) &           # no service, that is pure malware connection
+    (pc.field("meta.malware.family") == "asyncrat") &       # select single family (asyncrat)
+    (pc.field("td") > 10) &                                 # connection druation > 10s
+    pc.starts_with(pc.field("meta.sample.id"), "250901")    # use meta.sample.id to get only a single day 2025-09-01
+)
+
+df = dataset.to_table(
+    filter=filt
+).to_pandas()
+df
+```
 
 ## Collections
 
@@ -32,22 +53,14 @@ It provides realistic, heterogeneous encrypted traffic suitable for research on 
 
 * soho.parquet/ – directory containing TLS connection data.
 
-* soho.meta.parquet – file-level metadata describing devices and inferred system properties.
+
 
 **Characteristics**
 
 * Traffic originates from desktops, laptops, smartphones, tablets, IoT devices, and network infrastructure.
 * Raw PCAPs do not contain explicit labels; therefore no direct ground-truth OS is available.
-* Operating system annotations are inferred using SNI-based OS fingerprinting, including mappings to OS-unique domains (high-confidence indicators).
-* Metadata is available at the file level and can be propagated to all flows belonging to the same source IP within the day.
 
-**Metadata includes:**
-- `host.ip`
-- `system.os` (inferred)
-- `system.os_detection.{method,pattern,confidence,timestamp}`
-
-The metadata can be used to label the communication of each IP address throughout the day.
-Because OS detection is based on heuristics and may be ambiguous for some hosts, additional disambiguation strategies (e.g., majority voting, confidence weighting, or temporal smoothing) are recommended to determine the most probable OS identity.
+This dataset does not have any metadata.
 
 ### 2. `triage`
 TLS connections from **Triage sandbox executions** of malware and benign samples.
@@ -62,10 +75,10 @@ TLS connections from **Triage sandbox executions** of malware and benign samples
 - Both malware-driven and OS-driven TLS connections are included.
 
 **Metadata includes:**
-- `sample.{src,hash}`
+- `sample.id`
 - `system.os`
 - `system.service` (if the connection matches known system services)
-- `malware.{family,score}` for malicious samples
+- `malware.family` for malicious samples
 - Differentiation between malware-initiated and system-generated connections.
 
 
@@ -79,7 +92,7 @@ TLS connections captured during execution of **Windows applications** in a Windo
 - Useful for supervised application-level TLS classification and fingerprinting.
 
 **Metadata includes:**
-- `sample.{src,hash}`
+- `sample.id`
 - `system.os`
 - `application.name` (process associated with the TLS connection)
 
@@ -93,3 +106,6 @@ This dataset provides three complementary sources of annotated TLS traffic:
 | `homelan` | Real network       | OS (inferred via SNI) | Passive OS fingerprinting, LAN modeling |
 | `triage`  | Malware sandbox    | OS, malware family, score | Malware TLS profiling, behavioral analysis |
 | `winapps` | Windows Sandbox    | Application, OS | Application TLS classification, software fingerprinting |
+
+
+
