@@ -53,16 +53,15 @@ It provides realistic, heterogeneous encrypted traffic suitable for research on 
 
 * soho.parquet/ – directory containing TLS connection data.
 
-
-
 **Characteristics**
 
 * Traffic originates from desktops, laptops, smartphones, tablets, IoT devices, and network infrastructure.
 * Raw PCAPs do not contain explicit labels; therefore no direct ground-truth OS is available.
 
-This dataset does not have any metadata.
+**Metadata includes:**
+- `meta.sample.id` -- source batch identifier, eg., `20250926T08_SOHO`.
 
-### 2. `triage`
+### 2. `malware`
 TLS connections from **Triage sandbox executions** of malware and benign samples.
 
 **Characteristics:**
@@ -75,12 +74,10 @@ TLS connections from **Triage sandbox executions** of malware and benign samples
 - Both malware-driven and OS-driven TLS connections are included.
 
 **Metadata includes:**
-- `sample.id`
-- `system.os`
-- `system.service` (if the connection matches known system services)
-- `malware.family` for malicious samples
-- Differentiation between malware-initiated and system-generated connections.
-
+- `meta.sample.id` is a reference to the malware sample in the Triage format, e.g., `250901-1aw26afr2z_behavioral1`
+- `meta.system.os` denotes the sandbox used OS, for instance, `windows10-2004-x64` or `windows11-21h2-x64`
+- `meta.system.service` (if the connection matches known system services)
+- `meta.malware.family` for malicious samples
 
 ### 3. `winapps`
 TLS connections captured during execution of **Windows applications** in a Windows Sandbox environment.
@@ -92,20 +89,19 @@ TLS connections captured during execution of **Windows applications** in a Windo
 - Useful for supervised application-level TLS classification and fingerprinting.
 
 **Metadata includes:**
-- `sample.id`
-- `system.os`
-- `application.name` (process associated with the TLS connection)
-
+- `meta.sample.id` identifies the source collection of the samples, eg., `20240716_Adamant.Messenger`
+- `meta.system.os` specifies the Sandboxed OS, eg., `windows10-2004-x64`
+- `meta.application.name` application associated with the TLS connection, eg., `Adamant.Messenger`
 
 # Summary
 
 This dataset provides three complementary sources of annotated TLS traffic:
 
-| Dataset       | Source Environment | Annotation Level | Use Cases |
-|---------------|--------------------|------------------|-----------|
-| `homelan` | Real network       | OS (inferred via SNI) | Passive OS fingerprinting, LAN modeling |
-| `triage`  | Malware sandbox    | OS, malware family, score | Malware TLS profiling, behavioral analysis |
-| `winapps` | Windows Sandbox    | Application, OS | Application TLS classification, software fingerprinting |
+| Dataset       | Source Environment | Size | Number of connections | Interval |
+|---------------|--------------------|------|------------|-----------|
+| `soho`        | Real network       | 104 files / 12.8MB | 108,036  | 2024-07-16 -- 2024-11-22 |
+| `malware`     | Malware sandbox    | 916 files / 63.4 MB | 828,171 | 2025-09-10 -- 2025-09-30 |
+| `winapps`     | Windows Sandbox    | 5892 files / 63.2 MB | 29,526 | 2025-09-26 -- 2025-10-01 |
 
 
 
