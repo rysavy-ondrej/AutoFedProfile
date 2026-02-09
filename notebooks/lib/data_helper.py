@@ -84,7 +84,7 @@ def temporal_coverage_per_application(df: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(subset=["meta.sample.id"]).copy()
 
     # Split meta.sample.id
-    parts = df["meta.sample.id"].str.split("_", n=1, expand=True)
+    parts = df["meta.sample.id"].str.split(r"[_\-\s]+", n=1, expand=True)
     df["day"] = pd.to_datetime(parts[0], format="%Y%m%d", errors="coerce")
     df["application"] = parts[1]
 
