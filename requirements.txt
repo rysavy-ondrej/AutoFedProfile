@@ -1,0 +1,10 @@
+pandas
+polars
+pyarrow
+scikit-learn
+great_expectations
+tqdm 
+tensorflow 
+numpy 
+matplotlib 
+seaborn
