@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from typing import Optional
 
 
 def _require_columns(df: pd.DataFrame, required_cols: list[str]) -> None:
@@ -57,42 +58,46 @@ def get_weekly_connections_per_x(df: pd.DataFrame, x: str) -> pd.DataFrame:
     )
 
     # Optional: total connections per week
-    weekly["connections"] = weekly.get("system", 0) + weekly.get("unknown", 0) + weekly.get("application", 0)
+    weekly["connections"] = (
+        weekly.get("system", 0)
+        + weekly.get("unknown", 0)
+        + weekly.get("application", 0)
+        + weekly.get("malware", 0)
+    )
 
     return weekly
 
 
-def get_connection_label(df: pd.DataFrame, method: str, data: dict | None):
-    _require_columns(df, ["meta.application.process"])
+def get_connection_label(df: pd.DataFrame):
+    _require_columns(df, ["meta.application.process", "meta.malware.family", "meta.system.service"])
 
-    if method == "by_application_process":
-        if data is None: 
-            raise ValueError(f"Parameter 'data' has to be dictionary with system and unkown keys.")
-        system_processes = set(data.get("system", []))
-        unknown_processes = set(data.get("unknown", []))
-        process_col = df["meta.application.process"]
+    system_processes = {"System", "svchost.exe", "msedge.exe", "backgroundTaskHost.exe", "Explorer.EXE", "explorer.exe", "smartscreen.exe"}
+    unknown_processes = {"", None}
+    
+    process_col = df["meta.application.process"]
+    family_col = df["meta.malware.family"]
+    service_col = df["meta.system.service"]
 
-        return np.where(
-            process_col.isin(system_processes),
-            "system",
-            np.where(process_col.isin(unknown_processes), "unknown", "application"),
-        )
+    has_family = family_col.notna() & (family_col.astype(str).str.strip() != "")
+    has_system_service = service_col.notna() & (service_col.astype(str).str.strip() != "")
 
-    if method == "by_malware_family":
-        _require_columns(df, ["meta.malware.family", "meta.system.service"])
-        return np.where(
-            df["meta.malware.family"].notna(),
-            "malware",
-            np.where(
-                df["meta.system.service"].notna(),
-                "system",
-                "unknown",
-            ),
-        )
-
-    raise ValueError(
-        f"Unsupported method '{method}'. Supported methods: ['by_application_process','by_malware_family']"
+    process_is_system = process_col.isin(system_processes)
+    process_is_unknown = (
+        process_col.isna()
+        | (process_col.astype(str).str.strip() == "")
+        | process_col.isin(unknown_processes)
     )
+
+    return np.where(
+        has_family,
+        "malware",
+        np.where(
+            has_system_service | process_is_system,
+            "system",
+            np.where(process_is_unknown, "unknown", "application"),
+        ),
+    )
+
 
 def remove_grease_values(df: pd.DataFrame) -> pd.DataFrame:
     # Remove GREASE values from list-like TLS fields
