@@ -9,6 +9,11 @@ The schema and field definitions are described in the [Data](Data.md) specificat
 
 Both datasets contain per-flow TLS metadata enriched with contextual information (application, system service, malware family). They are designed for exploratory analysis, profiling, and anomaly detection experiments.
 
+| Dataset       | Source Environment | Size | Number of connections | Interval |
+|---------------|--------------------|------|------------|-----------|
+| `malware`     | Malware sandbox    | 916 files / 63.4 MB | 828,171 | 2025-09-10 -- 2025-09-30 |
+| `winapps`     | Windows Sandbox    | 5892 files / 63.2 MB | 29,526 | 2025-09-26 -- 2025-10-01 |
+
 ---
 
 ## Data Collection
