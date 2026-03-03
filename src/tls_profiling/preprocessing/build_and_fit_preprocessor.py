@@ -1,14 +1,7 @@
-import pandas as pd
-import numpy as np
-
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import MinMaxScaler 
-from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-
-from ..io.schema import get_tls_schema, list_columns_by_role
-
 def build_and_fit_preprocessor(df):
     """
     Fit and return a preprocessing pipeline for TLS/flow features.
@@ -48,10 +41,3 @@ def build_and_fit_preprocessor(df):
     pipeline = Pipeline(steps=[('preprocessor', preprocessor)])
     pipeline.fit(df)
     return pipeline
-
-
-def fit_preprocessor(df):
-    """
-    Backward-compatible alias for `build_and_fit_preprocessor`.
-    """
-    return build_and_fit_preprocessor(df)

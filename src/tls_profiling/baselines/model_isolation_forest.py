@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Tuple, List, Literal
+from typing import Optional, Tuple, List, Literal 
 
 import numpy as np
 import pandas as pd
@@ -37,11 +37,7 @@ class IsolationForestDetector:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self.model: Optional[IsolationForest] = None
-        self.feature_cols: Optional[List[str]] = None
-
-    def fit(self, df_train: pd.DataFrame) -> "IsolationForestDetector":
-        X = df_train
-        self.feature_cols = list(X.columns)
+    def fit(self, X: np.ndarray) -> "IsolationForestDetector":
         self.model = IsolationForest(
             n_estimators=self.cfg.n_estimators,
             max_samples=self.cfg.max_samples,
@@ -49,26 +45,25 @@ class IsolationForestDetector:
             random_state=self.cfg.random_state,
             n_jobs=self.cfg.n_jobs,
         )
-        self.model.fit(X.values)
+        self.model.fit(X)
         return self
 
-    def score(self, df: pd.DataFrame) -> np.ndarray:
+    def score(self, X: np.ndarray) -> np.ndarray:
         """
         Returns anomaly score where higher means 'more anomalous'.
         sklearn's score_samples: higher means 'more normal', so we negate it.
         """
-        if self.model is None or self.feature_cols is None:
+        if self.model is None:
             raise RuntimeError("Model not fitted. Call fit() first.")
 
-        # extract rel;evant features used to train the model
-        X = df[self.feature_cols]
-        normal_score = self.model.score_samples(X.values)  # higher = more normal
+        # extract relevant features used to train the model
+        normal_score = self.model.score_samples(X)  # higher = more normal
         return -normal_score  # higher = more anomalous
 
-    def predict(self, df: pd.DataFrame, threshold: float) -> np.ndarray:
+    def predict(self, X: np.ndarray, threshold: float) -> np.ndarray:
         """
         threshold is applied on anomaly score from score().
         Returns 1 for anomaly, 0 for normal.
         """
-        s = self.score(df)
+        s = self.score(X)
         return (s >= threshold).astype("int8")
