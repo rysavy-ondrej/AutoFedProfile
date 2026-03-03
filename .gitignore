@@ -1,2 +1,4 @@
 /lib/__pycache__
 /.venv-wsl312
+*.pyc
+*.pyc
