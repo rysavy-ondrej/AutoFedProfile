@@ -10,13 +10,8 @@ from sklearn.ensemble import IsolationForest
 # ----------------------------
 # Config
 # ----------------------------
-
 @dataclass(frozen=True)
 class Config:
-    # Feature choices
-    num_cols: Tuple[str, ...] = ("bs", "ps", "br", "pr", "sp", "dp", "td")
-    ja_cols: Tuple[str, ...] = ("tls.ja3", "tls.ja4", "tls.ja3s", "tls.ja4s")
-    tls_cols: Tuple[str,...] = ("tls.sext", "tls.cver", "tls.csg", "tls.ccs", "tls.cext", "tls.sver", "tls.ssv", "tls.csv", "tls.scs", "tls.alpn", "tls.sni")
     use_rec_stats: bool = True
     # TLS record sequence
     rec_col: str = "tls.rec"
