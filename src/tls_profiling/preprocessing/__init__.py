@@ -1,5 +1,5 @@
 from .build_and_fit_preprocessor import build_and_fit_preprocessor
-from .extract_features import extract_features
+from .extract_features import extract_features, extract_features_ext
 
 ## how to use:
 # import tls_profiling.preprocessing as tpp

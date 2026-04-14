@@ -5,11 +5,19 @@ network communication and for detecting traffic that deviates from the learned
 profile. The baselines are compared with the autoencoder-based approach used in
 the rest of the project.
 
+At the moment, the implemented malware-dataset baselines are:
+
+- `if_malware.ipynb`: one-class Isolation Forest
+- `pca_malware.ipynb`: one-class PCA reconstruction model
+- `gmm_malware.ipynb`: one-class Gaussian Mixture Model
+- `ocsvm_malware.ipynb`: one-class SVM
+- `rf_malware.ipynb`: supervised Random Forest classifier
+
 The input data are derived mainly from the `winapps` and `malware` datasets. In
-the intended evaluation setting, models are trained on one reference category
-(typically benign `winapp` traffic) and then tested on other categories to
-measure how well they separate in-distribution communication from anomalous or
-out-of-distribution traffic.
+the currently implemented malware experiments, the models are evaluated on
+traffic grouped into three categories and the one-class methods are trained on
+one reference category at a time to measure how well they separate
+in-distribution communication from anomalous or out-of-distribution traffic.
 
 ## Experiments
 
@@ -19,9 +27,8 @@ The datasets are split into three disjoint parts:
 - validation
 - test
 
-Across the datasets, the traffic may be grouped into the following labels:
+For the malware baseline notebooks, the traffic is grouped into the MUSA labels:
 
-- `winapp`
 - `malware`
 - `unknown`
 - `system`
@@ -31,7 +38,8 @@ the resulting model can distinguish that profile from other types of
 communication. In practice, this is closer to anomaly detection or
 out-of-distribution detection than to standard multi-class classification,
 because the model is usually fitted only on the reference behavior and not on a
-balanced set of all classes.
+balanced set of all classes. The main exception is the Random Forest baseline,
+which is trained as a fully supervised three-class classifier.
 
 ## Feature Sets
 
@@ -55,7 +63,8 @@ Combinations used in the ablation study:
 
 ## Methods
 
-The following baseline methods are relevant for the profiling task:
+The following baseline methods are currently implemented for the profiling
+experiments in this folder:
 
 ### Isolation Forest
 
@@ -76,16 +85,14 @@ traffic patterns share the same training set. Its main limitation is that it
 assumes a parametric density and may be sensitive to feature scaling and
 high-dimensional sparse representations.
 
-### JA3/JA4 Fingerprinting
+### One-Class SVM
 
-JA3 and JA4 are rule-based TLS fingerprinting approaches derived from the Client
-Hello and related handshake properties. For this project they serve as a domain
-baseline rather than a learned anomaly detector: the basic idea is to compare
-whether a TLS flow uses a known fingerprint seen during training or a new,
-previously unseen one. This baseline is attractive because it is interpretable
-and directly tied to TLS behavior, but it is limited because many different
-flows may share the same fingerprint and benign software updates can change the
-fingerprint without representing malicious behavior.
+One-Class SVM learns a nonlinear boundary around the reference traffic in
+feature space. Flows that fall outside that boundary receive high anomaly
+scores. This makes it a useful classical baseline when the profile is compact
+but not linearly separable. Its main limitation is scalability: kernel
+one-class SVMs can become expensive on very large datasets, so practical runs
+often require training on a subsample of the in-profile traffic.
 
 ### PCA Model
 
@@ -102,15 +109,31 @@ Random Forest is not a native anomaly detector; it is primarily a supervised
 classifier. Therefore, it is only meaningful here if labeled anomalous traffic
 is also provided during training. In that case it can be used as a supervised
 reference or approximate upper bound, but it should not be treated as directly
-comparable to one-class or unsupervised profiling methods. For the intended
-task, it is secondary to anomaly-detection baselines such as Isolation Forest,
-GMM, PCA, or fingerprint frequency methods.
+comparable to one-class or unsupervised profiling methods. In the implemented
+`rf_malware.ipynb` experiment, the Random Forest is trained to classify each
+flow into `system`, `malware`, or `unknown`, and is best interpreted as a
+separate supervised reference alongside the anomaly-detection baselines.
 
 ## Metrics
 
 The most important evaluation principle is that anomaly scores should be judged
 by how well they rank abnormal traffic above normal traffic and by how useful
 the resulting operating point is in practice.
+
+### Average-Precision/Precision Recall curve
+
+Average Precision (AP) summarizes the precision-recall curve into a single
+number. It is especially important when the positive class is relatively rare
+or when false positives are costly, because it focuses on the quality of the
+positive predictions rather than being dominated by the large negative class.
+In this project, AP complements AUC-ROC by showing whether high-scoring flows
+that are flagged as anomalous are actually concentrated among the true
+anomalies.
+
+For the Random Forest multiclass experiment, AP is computed in a one-vs-rest
+macro-averaged form so that it remains comparable in spirit with the anomaly
+baselines while still respecting the three-class setup.
+
 
 ### AUC-ROC
 
@@ -133,7 +156,7 @@ threshold-independent metrics such as AUC-ROC.
 
 ## Interpretation
 
-For this repository, the baseline results should be interpreted primarily as
+For this repository, most baseline results should be interpreted primarily as
 anomaly-detection results:
 
 - training uses only the reference or normal traffic profile
@@ -141,6 +164,16 @@ anomaly-detection results:
 - testing measures how strongly other traffic types deviate from the learned
   profile
 
+The implemented one-class baselines in this folder are:
+
+- Isolation Forest
+- PCA
+- Gaussian Mixture Model
+- One-Class SVM
+
 If a method is trained with both normal and anomalous labels, then the task
 changes from anomaly detection to supervised classification, and the results
-should be reported separately from the one-class baselines.
+should be reported separately from the one-class baselines. In this folder,
+that applies to the Random Forest experiment, where the main metric is macro
+F1 and the reported AUC/AP values are one-vs-rest macro summaries for
+high-level comparison only.

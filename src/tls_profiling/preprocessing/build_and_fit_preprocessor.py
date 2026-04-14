@@ -2,6 +2,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
+
 def build_and_fit_preprocessor(df):
     """
     Fit and return a preprocessing pipeline for TLS/flow features.
@@ -37,7 +38,11 @@ def build_and_fit_preprocessor(df):
                                                        '0x003c', '0xc009', '0x0004', '0xc027', '0x003d', '0x0067']], 
                                     sparse_output=False, handle_unknown='ignore'),['tls.scs']),
             ('remaining', 'passthrough', [])         
-        ], remainder='passthrough')
+        ],
+        remainder='passthrough',
+        verbose_feature_names_out=False,
+    )
     pipeline = Pipeline(steps=[('preprocessor', preprocessor)])
+    pipeline.set_output(transform="pandas")
     pipeline.fit(df)
     return pipeline
