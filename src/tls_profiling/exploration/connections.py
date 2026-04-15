@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from typing import Optional
 
 
 def _require_columns(df: pd.DataFrame, required_cols: list[str]) -> None:
@@ -9,18 +8,43 @@ def _require_columns(df: pd.DataFrame, required_cols: list[str]) -> None:
         raise KeyError(f"Missing required columns: {missing}")
 
 
+def _get_category_column_name(df: pd.DataFrame) -> str:
+    if "category" in df.columns:
+        return "category"
+    if "connection_label" in df.columns:
+        return "connection_label"
+    raise KeyError("Missing required columns: ['category' or 'connection_label']")
+
+
+def _clean_text(series: pd.Series) -> pd.Series:
+    return series.astype("string").str.strip()
+
+
+def _has_text(series: pd.Series) -> pd.Series:
+    cleaned = _clean_text(series)
+    return cleaned.notna() & (cleaned != "")
+
+
+def _resolve_platform(df: pd.DataFrame, os_name: str | None) -> pd.Series:
+    if os_name is None:
+        _require_columns(df, ["meta.system.os"])
+        return _clean_text(df["meta.system.os"])
+    return pd.Series(os_name, index=df.index, dtype="string")
+
+
 def get_connections_per_x(df: pd.DataFrame, x: str) -> pd.DataFrame:
-    _require_columns(df, [x, "connection_label", "meta.application.process"])
+    category_col = _get_category_column_name(df)
+    _require_columns(df, [x, "meta.application.process"])
 
     connections_per_applications = (
         df
         .groupby(x)
         .agg(
             connections=(x, "size"),  
-            system_connections=("connection_label", lambda s: (s == "system").sum()),
-            unknown_connections=("connection_label", lambda s: (s == "unknown").sum()),
-            application_connections=("connection_label", lambda s: (s == "application").sum()),
-            malware_connections=("connection_label", lambda s: (s == "malware").sum()),
+            system_connections=(category_col, lambda s: (s == "system").sum()),
+            unknown_connections=(category_col, lambda s: (s == "unknown").sum()),
+            application_connections=(category_col, lambda s: (s == "application").sum()),
+            malware_connections=(category_col, lambda s: (s == "malware").sum()),
 
             processes=("meta.application.process", lambda x: list(x.dropna().unique()))
         )
@@ -42,7 +66,8 @@ def get_connections_per_x(df: pd.DataFrame, x: str) -> pd.DataFrame:
 
 
 def get_weekly_connections_per_x(df: pd.DataFrame, x: str) -> pd.DataFrame:
-    _require_columns(df, [x, "ts", "connection_label"])
+    category_col = _get_category_column_name(df)
+    _require_columns(df, [x, "ts"])
 
     work_df = df.copy()
     work_df["dt"] = pd.to_datetime(work_df["ts"], unit="s", utc=True, errors="coerce")
@@ -51,9 +76,9 @@ def get_weekly_connections_per_x(df: pd.DataFrame, x: str) -> pd.DataFrame:
 
 
     weekly = (
-        work_df.groupby([x, "week", "connection_label"])
+        work_df.groupby([x, "week", category_col])
         .size()
-        .unstack("connection_label", fill_value=0)   # columns: system/unknown/application
+        .unstack(category_col, fill_value=0)   # columns: system/unknown/application
         .reset_index()
     )
 
@@ -68,27 +93,32 @@ def get_weekly_connections_per_x(df: pd.DataFrame, x: str) -> pd.DataFrame:
     return weekly
 
 
-def get_connection_label(df: pd.DataFrame):
-    _require_columns(df, ["meta.application.process", "meta.malware.family", "meta.system.service"])
+def get_connection_label(df: pd.DataFrame, os_name: str | None = None) -> pd.DataFrame:
+    required = [
+        "meta.application.process",
+        "meta.application.name",
+        "meta.malware.family",
+        "meta.system.service",
+    ]
+    _require_columns(df, required)
 
     system_processes = {"System", "svchost.exe", "msedge.exe", "backgroundTaskHost.exe", "Explorer.EXE", "explorer.exe", "smartscreen.exe"}
-    unknown_processes = {"", None}
-    
-    process_col = df["meta.application.process"]
-    family_col = df["meta.malware.family"]
-    service_col = df["meta.system.service"]
+    process_col = _clean_text(df["meta.application.process"])
+    application_col = _clean_text(df["meta.application.name"])
+    family_col = _clean_text(df["meta.malware.family"])
+    service_col = _clean_text(df["meta.system.service"])
+    platform_col = _resolve_platform(df, os_name)
 
-    has_family = family_col.notna() & (family_col.astype(str).str.strip() != "")
-    has_system_service = service_col.notna() & (service_col.astype(str).str.strip() != "")
+    has_family = _has_text(df["meta.malware.family"])
+    has_system_service = _has_text(df["meta.system.service"])
 
     process_is_system = process_col.isin(system_processes)
     process_is_unknown = (
         process_col.isna()
-        | (process_col.astype(str).str.strip() == "")
-        | process_col.isin(unknown_processes)
+        | (process_col == "")
     )
 
-    return np.where(
+    category = np.where(
         has_family,
         "malware",
         np.where(
@@ -96,6 +126,29 @@ def get_connection_label(df: pd.DataFrame):
             "system",
             np.where(process_is_unknown, "unknown", "application"),
         ),
+    )
+
+    label = np.where(
+        category == "malware",
+        family_col,
+        np.where(
+            category == "system",
+            service_col.where(has_system_service, process_col),
+            np.where(
+                category == "application",
+                application_col.where(_has_text(df["meta.application.name"]), process_col),
+                pd.NA,
+            ),
+        ),
+    )
+
+    return pd.DataFrame(
+        {
+            "category": pd.Series(category, index=df.index, dtype="string"),
+            "label": pd.Series(label, index=df.index, dtype="string"),
+            "platform": pd.Series(platform_col, index=df.index, dtype="string"),
+        },
+        index=df.index,
     )
 
 
