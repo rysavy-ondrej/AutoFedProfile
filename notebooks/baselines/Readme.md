@@ -5,16 +5,17 @@ network communication and for detecting traffic that deviates from the learned
 profile. The baselines are compared with the autoencoder-based approach used in
 the rest of the project.
 
-At the moment, the implemented malware-dataset baselines are:
+At the moment, the implemented baseline notebooks are:
 
-- `if_malware.ipynb`: one-class Isolation Forest
-- `pca_malware.ipynb`: one-class PCA reconstruction model
-- `gmm_malware.ipynb`: one-class Gaussian Mixture Model
-- `ocsvm_malware.ipynb`: one-class SVM
-- `rf_malware.ipynb`: supervised Random Forest classifier
+- `if_model.ipynb`: one-class Isolation Forest
+- `pca_model.ipynb`: one-class PCA reconstruction model
+- `gmm_model.ipynb`: one-class Gaussian Mixture Model
+- `ocsvm_model.ipynb`: one-class SVM
+- `rf_model.ipynb`: supervised Random Forest classifier
+- `xgb_model.ipynb`: supervised XGBoost classifier
 
 The input data are derived mainly from the `winapps` and `malware` datasets. In
-the currently implemented malware experiments, the models are evaluated on
+the currently implemented profiling experiments, the models are evaluated on
 traffic grouped into three categories and the one-class methods are trained on
 one reference category at a time to measure how well they separate
 in-distribution communication from anomalous or out-of-distribution traffic.
@@ -27,10 +28,11 @@ The datasets are split into three disjoint parts:
 - validation
 - test
 
-For the malware baseline notebooks, the traffic is grouped into the MUSA labels:
+For the profiling baseline notebooks, the traffic is grouped into the target
+categories:
 
+- `application`
 - `malware`
-- `unknown`
 - `system`
 
 The goal is to learn a profile of the selected category and then test whether
@@ -110,8 +112,8 @@ classifier. Therefore, it is only meaningful here if labeled anomalous traffic
 is also provided during training. In that case it can be used as a supervised
 reference or approximate upper bound, but it should not be treated as directly
 comparable to one-class or unsupervised profiling methods. In the implemented
-`rf_malware.ipynb` experiment, the Random Forest is trained to classify each
-flow into `system`, `malware`, or `unknown`, and is best interpreted as a
+`rf_model.ipynb` experiment, the Random Forest is trained to classify each
+flow into `system`, `malware`, or `application`, and is best interpreted as a
 separate supervised reference alongside the anomaly-detection baselines.
 
 ## Metrics
